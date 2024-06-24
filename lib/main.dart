@@ -12,8 +12,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: 'Scheduler App',
-        theme:
-            ThemeData(brightness: Brightness.dark, primaryColor: Colors.black),
+        // theme:
+        //     ThemeData(brightness: Brightness.dark, primaryColor: Colors.black),
         home: const HomePage());
   }
 }
