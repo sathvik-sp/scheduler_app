@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:scheduler_app/sub_task_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,6 +10,8 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final List<Task> tasks = [];
+  final TextEditingController _taskController = TextEditingController();
+  bool isButtonEnabled = false;
 
   void addTask(String taskName) {
     setState(() {
@@ -16,69 +19,93 @@ class HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> addTaskDialogue() async {
-    String newTask = "";
-    await showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Add Task"),
-          content: TextField(
-            onChanged: (value) {
-              newTask = value;
-            },
-            decoration: InputDecoration(hintText: "Enter task here"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Cancel"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text("Add"),
-              onPressed: () {
-                addTask(newTask);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+    _taskController.addListener(_onTextChanged);
   }
 
-  Future<void> addSubtaskDialogue(Task task) async {
-    String newSubtask = "";
-    await showDialog<void>(
+  @override
+  void dispose() {
+    _taskController.dispose();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    setState(() {
+      isButtonEnabled = _taskController.text.isNotEmpty;
+    });
+  }
+
+  Future<void> addTaskDialogue() async {
+    String newTask = "";
+    _taskController.text = ""; // Clear the text field when showing the dialog
+    isButtonEnabled = false; // Initially disable the button
+    await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Add Subtask"),
-          content: TextField(
-            onChanged: (value) {
-              newSubtask = value;
-            },
-            decoration: InputDecoration(hintText: "Enter subtask here"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Cancel"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text("Add"),
-              onPressed: () {
-                setState(() {
-                  task.subtasks.add(Subtask(name: newSubtask));
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SizedBox(
+                height: 160, // Adjust the height as needed
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: _taskController,
+                        onChanged: (value) {
+                          newTask = value;
+                          setState(() {
+                            isButtonEnabled = value.isNotEmpty;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'New Task',
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: isButtonEnabled
+                                ? () {
+                                    addTask(newTask);
+                                    Navigator.pop(context);
+                                  }
+                                : null,
+                            style: ButtonStyle(
+                              foregroundColor: MaterialStateProperty.all<Color>(
+                                isButtonEnabled ? Colors.blue : Colors.grey,
+                              ),
+                            ),
+                            child: Text(
+                              'Save',
+                              style: TextStyle(
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -87,45 +114,52 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData.dark(),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Scheduler'),
+          title: const Text('Scheduler'),
         ),
         body: ListView.builder(
           itemCount: tasks.length,
           itemBuilder: (context, index) {
             final task = tasks[index];
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              child: ExpansionTile(
-                title: Text(task.name),
-                children: task.subtasks.map((subtask) {
-                  return ListTile(
-                    leading: Checkbox(
-                      value: subtask.completed,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          subtask.completed = value!;
-                        });
-                      },
+            return ListTile(
+                onTap: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SubtasksPage(task: task),
+                        ),
+                      )
+                    },
+                title: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 5.0,
+                      horizontal: 0.0), // Adjust padding as needed
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15.0),
+                      color: Colors.grey[900], // Example background color
                     ),
-                    title: Text(subtask.name),
-                  );
-                }).toList(),
-                trailing: IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: () => addSubtaskDialogue(task),
-                ),
-              ),
-            );
+                    child: ListTile(
+                      title: Text(
+                        task.name,
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ));
           },
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: addTaskDialogue,
           tooltip: "Add task",
-          child: Icon(Icons.add),
+          backgroundColor: Color.fromARGB(255, 136, 255, 0),
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 40,
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
@@ -145,8 +179,4 @@ class Subtask {
   bool completed = false;
 
   Subtask({required this.name});
-}
-
-void main() {
-  runApp(HomePage());
 }
