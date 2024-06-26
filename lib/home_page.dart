@@ -124,31 +124,28 @@ class HomePageState extends State<HomePage> {
           itemBuilder: (context, index) {
             final task = tasks[index];
             return ListTile(
-                onTap: () => {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SubtasksPage(task: task),
-                        ),
-                      )
-                    },
-                title: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 5.0,
-                      horizontal: 0.0), // Adjust padding as needed
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15.0),
-                      color: Colors.grey[900], // Example background color
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        task.name,
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ),
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubtasksPage(task: task),
                   ),
-                ));
+                )
+              },
+              contentPadding: const EdgeInsets.only(top: 5, left: 5, right: 5),
+              title: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15.0),
+                  color: Colors.grey[900], // Example background color
+                ),
+                child: ListTile(
+                  title: Text(
+                    task.name,
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
+              ),
+            );
           },
         ),
         floatingActionButton: FloatingActionButton(
